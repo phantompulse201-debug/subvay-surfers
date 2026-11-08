@@ -1,0 +1,6 @@
+{
+  "name": "Subway Surfers 3D Runner",
+  "description": "A breathtaking 3D cosmic endless space runner web game set across the galaxy with neon cosmic energy tracks, planetary backdrops, starfield nebulas, interstellar cruisers, stardust coins, warp jetpacks, and gravity magnets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

@@ -1,0 +1,2746 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Subway Surfers 3D Runner - Cosmic Galaxy Edition</title>
+    <meta name="description" content="A breathtaking 3D cosmic endless space runner web game set across the galaxy with neon cosmic energy tracks, planetary backdrops, starfield nebulas, interstellar cruisers, stardust coins, warp jetpacks, and gravity magnets." />
+    <meta property="og:title" content="Subway Surfers 3D Runner - Cosmic Galaxy Edition" />
+    <meta property="og:description" content="A breathtaking 3D cosmic endless space runner web game set across the galaxy with neon cosmic energy tracks, planetary backdrops, starfield nebulas, interstellar cruisers, stardust coins, warp jetpacks, and gravity magnets." />
+    <meta property="og:type" content="website" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700;800;900&family=Orbitron:wght@600;700;800;900&family=Outfit:wght@400;600;800;900&display=swap" rel="stylesheet">
+
+    <!-- Three.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        user-select: none;
+        -webkit-user-select: none;
+        touch-action: none;
+      }
+
+      body, html {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #060214;
+        font-family: 'Outfit', sans-serif;
+        color: #ffffff;
+      }
+
+      #game-container {
+        position: relative;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      #webgl-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        display: block;
+        z-index: 1;
+      }
+
+      /* ================= UI OVERLAYS ================= */
+      .ui-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10;
+        pointer-events: none;
+      }
+
+      .interactive {
+        pointer-events: auto;
+      }
+
+      /* Top Cosmic HUD */
+      #hud {
+        display: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        padding: 16px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        z-index: 20;
+      }
+
+      .hud-card {
+        background: rgba(13, 10, 38, 0.82);
+        border: 2px solid rgba(139, 92, 246, 0.35);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(139, 92, 246, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        border-radius: 18px;
+        padding: 8px 18px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        backdrop-filter: blur(8px);
+      }
+
+      .score-box {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .hud-label {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        color: #a78bfa;
+      }
+
+      .hud-value {
+        font-family: 'Fredoka', cursive, sans-serif;
+        font-size: 26px;
+        font-weight: 800;
+        color: #ffffff;
+        text-shadow: 0 0 10px rgba(192, 132, 252, 0.8), 0 2px 4px rgba(0,0,0,0.8);
+        line-height: 1.1;
+      }
+
+      .coin-card {
+        border-color: rgba(245, 158, 11, 0.5);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(245, 158, 11, 0.3);
+      }
+
+      .coin-icon {
+        width: 34px;
+        height: 34px;
+        background: linear-gradient(135deg, #facc15, #f59e0b);
+        border: 2px solid #fef08a;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: 'Orbitron', cursive;
+        font-size: 18px;
+        font-weight: 900;
+        color: #78350f;
+        box-shadow: 0 0 16px rgba(250, 204, 21, 0.85);
+        animation: spinCoin 4s linear infinite;
+      }
+
+      @keyframes spinCoin {
+        0% { transform: rotateY(0deg); }
+        100% { transform: rotateY(360deg); }
+      }
+
+      .multiplier-pill {
+        background: linear-gradient(135deg, #ec4899, #8b5cf6);
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 13px;
+        font-weight: 900;
+        color: #fff;
+        text-shadow: 0 0 8px rgba(236, 72, 153, 0.8);
+        box-shadow: 0 0 15px rgba(236, 72, 153, 0.5);
+        letter-spacing: 1px;
+      }
+
+      .top-right-controls {
+        display: flex;
+        gap: 10px;
+      }
+
+      .hud-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        background: rgba(17, 12, 46, 0.85);
+        border: 2px solid rgba(167, 139, 250, 0.4);
+        color: #fff;
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: transform 0.15s, background 0.15s, border-color 0.15s, box-shadow 0.15s;
+        box-shadow: 0 4px 14px rgba(0,0,0,0.5), 0 0 10px rgba(139, 92, 246, 0.3);
+      }
+
+      .hud-btn:hover {
+        transform: scale(1.08);
+        background: rgba(29, 20, 77, 0.95);
+        border-color: #c084fc;
+        box-shadow: 0 0 16px rgba(192, 132, 252, 0.6);
+      }
+
+      .hud-btn:active {
+        transform: scale(0.94);
+      }
+
+      /* Active Cosmic Powerups Bar */
+      #powerups-bar {
+        position: absolute;
+        top: 86px;
+        left: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        z-index: 20;
+      }
+
+      .powerup-indicator {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: rgba(13, 10, 38, 0.9);
+        border: 2px solid rgba(167, 139, 250, 0.4);
+        border-radius: 14px;
+        padding: 6px 14px 6px 8px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 15px rgba(139, 92, 246, 0.3);
+        animation: slideIn 0.3s ease-out;
+      }
+
+      .powerup-badge-icon {
+        width: 34px;
+        height: 34px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        font-weight: 900;
+      }
+
+      .magnet-badge {
+        background: linear-gradient(135deg, #ef4444, #991b1b);
+        border: 1px solid #fca5a5;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+      }
+
+      .jetpack-badge {
+        background: linear-gradient(135deg, #06b6d4, #0284c7);
+        border: 1px solid #7dd3fc;
+        box-shadow: 0 0 10px rgba(6, 182, 212, 0.6);
+      }
+
+      .hoverboard-badge {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: 1px solid #6ee7b7;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+      }
+
+      .powerup-info {
+        display: flex;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .powerup-name {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      .powerup-meter-bg {
+        width: 90px;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+
+      .powerup-meter-fill {
+        height: 100%;
+        width: 100%;
+        background: #38bdf8;
+        border-radius: 3px;
+        transition: width 0.1s linear;
+        box-shadow: 0 0 8px currentColor;
+      }
+
+      /* Floating Notifications */
+      #notification-area {
+        position: absolute;
+        top: 25%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        pointer-events: none;
+        z-index: 25;
+      }
+
+      .float-text {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 26px;
+        font-weight: 900;
+        color: #38bdf8;
+        text-shadow: 0 0 18px rgba(56, 189, 248, 0.9), 0 0 35px rgba(139, 92, 246, 0.8), 0 4px 10px rgba(0,0,0,0.8);
+        animation: floatUpFade 1.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        letter-spacing: 2px;
+      }
+
+      @keyframes floatUpFade {
+        0% { opacity: 0; transform: translateY(20px) scale(0.7); }
+        20% { opacity: 1; transform: translateY(0) scale(1.15); }
+        40% { transform: translateY(-5px) scale(1); }
+        100% { opacity: 0; transform: translateY(-45px) scale(0.9); }
+      }
+
+      @keyframes slideIn {
+        0% { opacity: 0; transform: translateX(-30px); }
+        100% { opacity: 1; transform: translateX(0); }
+      }
+
+      /* Mobile Controls Overlay */
+      #mobile-controls {
+        position: absolute;
+        bottom: 24px;
+        left: 0;
+        width: 100%;
+        padding: 0 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        z-index: 20;
+        pointer-events: none;
+      }
+
+      .touch-btn {
+        width: 68px;
+        height: 68px;
+        border-radius: 22px;
+        background: rgba(19, 13, 53, 0.75);
+        border: 2px solid rgba(167, 139, 250, 0.4);
+        color: #ffffff;
+        font-size: 26px;
+        font-weight: 900;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: auto;
+        backdrop-filter: blur(8px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.6), 0 0 16px rgba(139, 92, 246, 0.3);
+        transition: transform 0.1s, background 0.1s, border-color 0.1s;
+        user-select: none;
+      }
+
+      .touch-btn:active {
+        transform: scale(0.9);
+        background: rgba(139, 92, 246, 0.6);
+        border-color: #38bdf8;
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
+      }
+
+      .dpad-horizontal {
+        display: flex;
+        gap: 16px;
+      }
+
+      .dpad-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      /* Menu Modals & Screens */
+      .modal-screen {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at center, rgba(19, 11, 56, 0.8) 0%, rgba(4, 2, 14, 0.95) 100%);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px;
+        z-index: 50;
+        pointer-events: auto;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.3s ease, visibility 0.3s ease;
+      }
+
+      .modal-screen.active {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .menu-panel {
+        background: linear-gradient(180deg, rgba(26, 17, 71, 0.92) 0%, rgba(10, 6, 31, 0.98) 100%);
+        border: 2px solid rgba(167, 139, 250, 0.4);
+        border-radius: 28px;
+        box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 45px rgba(139, 92, 246, 0.35);
+        padding: 36px 40px;
+        width: 100%;
+        max-width: 470px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        animation: scalePop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        backdrop-filter: blur(12px);
+      }
+
+      @keyframes scalePop {
+        0% { transform: scale(0.85); opacity: 0; }
+        100% { transform: scale(1); opacity: 1; }
+      }
+
+      .logo-tag {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 13px;
+        font-weight: 800;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: #38bdf8;
+        background: rgba(56, 189, 248, 0.15);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        padding: 5px 16px;
+        border-radius: 12px;
+        margin-bottom: 10px;
+        box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+      }
+
+      .game-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 42px;
+        font-weight: 900;
+        line-height: 1.1;
+        background: linear-gradient(180deg, #ffffff 10%, #38bdf8 45%, #c084fc 80%, #f43f5e 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 15px rgba(192, 132, 252, 0.7));
+        margin-bottom: 6px;
+        letter-spacing: 2px;
+      }
+
+      .game-subtitle {
+        font-family: 'Outfit', sans-serif;
+        font-size: 14px;
+        font-weight: 600;
+        color: #a78bfa;
+        margin-bottom: 16px;
+        letter-spacing: 1px;
+      }
+
+      .score-summary-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        width: 100%;
+        margin: 14px 0 24px;
+      }
+
+      .stat-card {
+        background: rgba(14, 9, 41, 0.85);
+        border: 2px solid rgba(139, 92, 246, 0.25);
+        border-radius: 18px;
+        padding: 14px 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+      }
+
+      .stat-icon {
+        font-size: 20px;
+        margin-bottom: 4px;
+        filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.5));
+      }
+
+      .stat-num {
+        font-family: 'Fredoka', cursive;
+        font-size: 26px;
+        font-weight: 800;
+        color: #ffffff;
+        text-shadow: 0 0 10px rgba(192, 132, 252, 0.6);
+      }
+
+      .stat-title {
+        font-family: 'Orbitron', sans-serif;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        color: #a78bfa;
+        letter-spacing: 1px;
+      }
+
+      .main-btn {
+        width: 100%;
+        height: 60px;
+        border-radius: 20px;
+        background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+        border: 2px solid #7dd3fc;
+        color: #ffffff;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 20px;
+        font-weight: 900;
+        letter-spacing: 2px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        cursor: pointer;
+        box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.6), 0 0 25px rgba(139, 92, 246, 0.5);
+        transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+      }
+
+      .main-btn:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 14px 30px -5px rgba(59, 130, 246, 0.75), 0 0 35px rgba(56, 189, 248, 0.7);
+        filter: brightness(1.12);
+      }
+
+      .main-btn:active {
+        transform: translateY(2px) scale(0.98);
+        box-shadow: 0 5px 15px -3px rgba(59, 130, 246, 0.6);
+      }
+
+      .controls-guide {
+        margin-top: 20px;
+        font-size: 12px;
+        color: #c4b5fd;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+
+      .key-pill {
+        display: inline-block;
+        background: rgba(139, 92, 246, 0.25);
+        border: 1px solid rgba(167, 139, 250, 0.5);
+        border-radius: 6px;
+        padding: 2px 8px;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 11px;
+        font-weight: 800;
+        color: #e9d5ff;
+        box-shadow: 0 0 6px rgba(139, 92, 246, 0.3);
+      }
+
+      .new-record-tag {
+        display: none;
+        background: linear-gradient(135deg, #f59e0b, #ec4899);
+        color: #fff;
+        font-family: 'Orbitron', sans-serif;
+        font-size: 13px;
+        font-weight: 900;
+        padding: 5px 14px;
+        border-radius: 12px;
+        margin-bottom: 12px;
+        animation: pulseRecord 1s ease-in-out infinite alternate;
+        box-shadow: 0 0 20px rgba(245, 158, 11, 0.7);
+        letter-spacing: 1px;
+      }
+
+      @keyframes pulseRecord {
+        0% { transform: scale(0.96); }
+        100% { transform: scale(1.05); }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="game-container">
+      <canvas id="webgl-canvas"></canvas>
+
+      <!-- IN-GAME HUD -->
+      <div id="hud" class="ui-layer">
+        <!-- Left: Cosmic Score -->
+        <div class="hud-card">
+          <div class="score-box">
+            <span class="hud-label">COSMIC SCORE</span>
+            <span id="hud-score" class="hud-value">0</span>
+          </div>
+          <div class="multiplier-pill" id="hud-multiplier">1X</div>
+        </div>
+
+        <!-- Center: Stardust Coins Collected -->
+        <div class="hud-card coin-card">
+          <div class="coin-icon">★</div>
+          <div class="score-box">
+            <span class="hud-label">STARDUST</span>
+            <span id="hud-coins" class="hud-value">0</span>
+          </div>
+        </div>
+
+        <!-- Right: Actions (Pause, Sound) -->
+        <div class="top-right-controls interactive">
+          <button id="btn-sound" class="hud-btn" title="Toggle Audio">🔊</button>
+          <button id="btn-pause" class="hud-btn" title="Pause Game">⏸</button>
+        </div>
+      </div>
+
+      <!-- Active Powerups Indicators -->
+      <div id="powerups-bar" class="ui-layer">
+        <div id="magnet-timer" class="powerup-indicator" style="display: none;">
+          <div class="powerup-badge-icon magnet-badge">🧲</div>
+          <div class="powerup-info">
+            <span class="powerup-name" style="color: #fca5a5;">GRAVITY MAGNET</span>
+            <div class="powerup-meter-bg"><div id="magnet-bar-fill" class="powerup-meter-fill" style="background: #ef4444;"></div></div>
+          </div>
+        </div>
+
+        <div id="jetpack-timer" class="powerup-indicator" style="display: none;">
+          <div class="powerup-badge-icon jetpack-badge">🚀</div>
+          <div class="powerup-info">
+            <span class="powerup-name" style="color: #7dd3fc;">WARP THRUSTER</span>
+            <div class="powerup-meter-bg"><div id="jetpack-bar-fill" class="powerup-meter-fill" style="background: #38bdf8;"></div></div>
+          </div>
+        </div>
+
+        <div id="hoverboard-timer" class="powerup-indicator" style="display: none;">
+          <div class="powerup-badge-icon hoverboard-badge">🛹</div>
+          <div class="powerup-info">
+            <span class="powerup-name" style="color: #6ee7b7;">COSMIC SHIELD</span>
+            <div class="powerup-meter-bg"><div id="hoverboard-bar-fill" class="powerup-meter-fill" style="background: #10b981;"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Floating notification text popup -->
+      <div id="notification-area"></div>
+
+      <!-- MOBILE TOUCH ON-SCREEN CONTROLS -->
+      <div id="mobile-controls" class="ui-layer">
+        <div class="dpad-horizontal">
+          <button id="touch-left" class="touch-btn" aria-label="Left">◀</button>
+          <button id="touch-right" class="touch-btn" aria-label="Right">▶</button>
+        </div>
+        <div class="dpad-vertical">
+          <button id="touch-jump" class="touch-btn" aria-label="Jump">▲</button>
+          <button id="touch-slide" class="touch-btn" aria-label="Slide">▼</button>
+        </div>
+      </div>
+
+      <!-- START MENU SCREEN -->
+      <div id="start-screen" class="modal-screen active">
+        <div class="menu-panel">
+          <div class="logo-tag">KOINOT BO'YLAB POYGA // GALAXY RUNNER</div>
+          <h1 class="game-title">COSMIC<br>SURFERS</h1>
+          <div class="game-subtitle">Subway Surfers in Deep Space Universe</div>
+
+          <div class="score-summary-grid">
+            <div class="stat-card">
+              <span class="stat-icon">🏆</span>
+              <span id="start-high-score" class="stat-num">0</span>
+              <span class="stat-title">Galaxy Record</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">✨</span>
+              <span id="start-total-coins" class="stat-num">0</span>
+              <span class="stat-title">Total Stardust</span>
+            </div>
+          </div>
+
+          <button id="btn-play" class="main-btn">
+            <span>WARP LAUNCH</span>
+            <span>▶</span>
+          </button>
+
+          <div class="controls-guide">
+            <div><span class="key-pill">←</span> <span class="key-pill">→</span> or <span class="key-pill">A</span> <span class="key-pill">D</span> : Switch Energy Lanes</div>
+            <div><span class="key-pill">↑</span> or <span class="key-pill">W</span> / <span class="key-pill">SPACE</span> : Anti-Gravity Jump</div>
+            <div><span class="key-pill">↓</span> or <span class="key-pill">S</span> : Plasma Slide / Mid-air Dive</div>
+            <div style="margin-top: 4px; color: #38bdf8;">Mobile: Swipe Up, Down, Left, Right anywhere!</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GAME OVER SCREEN -->
+      <div id="gameover-screen" class="modal-screen">
+        <div class="menu-panel">
+          <div id="new-record-banner" class="new-record-tag">🎉 NEW GALAXY RECORD! 🎉</div>
+          <div class="logo-tag" style="color: #f43f5e; background: rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.4);">WARP BREACHED</div>
+          <h1 class="game-title" style="margin-bottom: 8px;">GAME OVER</h1>
+
+          <div class="score-summary-grid">
+            <div class="stat-card">
+              <span class="stat-icon">🎯</span>
+              <span id="go-score" class="stat-num">0</span>
+              <span class="stat-title">Run Score</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">✨</span>
+              <span id="go-coins" class="stat-num">0</span>
+              <span class="stat-title">Stardust</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">🏆</span>
+              <span id="go-high-score" class="stat-num">0</span>
+              <span class="stat-title">Best Score</span>
+            </div>
+            <div class="stat-card">
+              <span class="stat-icon">⚡</span>
+              <span id="go-distance" class="stat-num">0ly</span>
+              <span class="stat-title">Light-Years</span>
+            </div>
+          </div>
+
+          <button id="btn-restart" class="main-btn" style="background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%); border-color: #f472b6;">
+            <span>RELAUNCH</span>
+            <span>↺</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- PAUSE SCREEN -->
+      <div id="pause-screen" class="modal-screen">
+        <div class="menu-panel">
+          <div class="logo-tag">WARP DRIVE PAUSED</div>
+          <h1 class="game-title" style="margin-bottom: 20px;">PAUSED</h1>
+
+          <button id="btn-resume" class="main-btn" style="margin-bottom: 14px;">
+            <span>RESUME FLIGHT</span>
+            <span>▶</span>
+          </button>
+
+          <button id="btn-quit" class="main-btn" style="background: rgba(30, 20, 75, 0.85); border-color: rgba(167,139,250,0.3); box-shadow: none; font-size: 16px; height: 50px;">
+            <span>RETURN TO BASE</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN GAME LOGIC SCRIPT -->
+    <script>
+      /* =========================================================================
+         COSMIC SURFERS 3D - SPACE UNIVERSE EDITION
+         ========================================================================= */
+
+      const STATE = {
+        MENU: 'MENU',
+        PLAYING: 'PLAYING',
+        PAUSED: 'PAUSED',
+        GAMEOVER: 'GAMEOVER'
+      };
+
+      let currentState = STATE.MENU;
+
+      // Cosmic Audio Synthesizer (Zero external dependencies)
+      class SoundEngine {
+        constructor() {
+          this.ctx = null;
+          this.muted = false;
+        }
+
+        init() {
+          if (!this.ctx) {
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            if (AudioContext) {
+              this.ctx = new AudioContext();
+            }
+          }
+          if (this.ctx && this.ctx.state === 'suspended') {
+            this.ctx.resume();
+          }
+        }
+
+        toggleMute() {
+          this.muted = !this.muted;
+          const soundBtn = document.getElementById('btn-sound');
+          if (soundBtn) {
+            soundBtn.textContent = this.muted ? '🔇' : '🔊';
+          }
+          return this.muted;
+        }
+
+        playTone(freq, type = 'sine', duration = 0.15, vol = 0.25) {
+          if (this.muted || !this.ctx) return;
+          try {
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+            gain.gain.setValueAtTime(vol, this.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + duration);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start();
+            osc.stop(this.ctx.currentTime + duration);
+          } catch(e) {}
+        }
+
+        playCoin() {
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            // Shimmering celestial bell
+            const freqs = [1046.5, 1318.5, 1567.98]; // C6, E6, G6
+            freqs.forEach((f, i) => {
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.type = 'sine';
+              osc.frequency.setValueAtTime(f, now + i * 0.03);
+              gain.gain.setValueAtTime(0.18, now + i * 0.03);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.03 + 0.25);
+              osc.connect(gain);
+              gain.connect(this.ctx.destination);
+              osc.start(now + i * 0.03);
+              osc.stop(now + i * 0.03 + 0.25);
+            });
+          } catch(e) {}
+        }
+
+        playJump() {
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(320, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+            gain.gain.setValueAtTime(0.28, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.2);
+          } catch(e) {}
+        }
+
+        playSlide() {
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            // High-tech plasma hiss
+            const bufferSize = this.ctx.sampleRate * 0.22;
+            const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+            const data = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+              data[i] = Math.random() * 2 - 1;
+            }
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = buffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(2400, now);
+            filter.frequency.exponentialRampToValueAtTime(600, now + 0.22);
+            filter.Q.value = 4.0;
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.22, now);
+            gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.ctx.destination);
+            noise.start(now);
+          } catch(e) {}
+        }
+
+        playPowerup() {
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            const notes = [659.25, 830.61, 987.77, 1318.51]; // E5, G#5, B5, E6
+            notes.forEach((freq, idx) => {
+              const osc = this.ctx.createOscillator();
+              const gain = this.ctx.createGain();
+              osc.type = 'triangle';
+              osc.frequency.setValueAtTime(freq, now + idx * 0.05);
+              gain.gain.setValueAtTime(0.25, now + idx * 0.05);
+              gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.22);
+              osc.connect(gain);
+              gain.connect(this.ctx.destination);
+              osc.start(now + idx * 0.05);
+              osc.stop(now + idx * 0.05 + 0.22);
+            });
+          } catch(e) {}
+        }
+
+        playCrash() {
+          if (this.muted || !this.ctx) return;
+          try {
+            const now = this.ctx.currentTime;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(140, now);
+            osc.frequency.exponentialRampToValueAtTime(30, now + 0.4);
+            gain.gain.setValueAtTime(0.45, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.connect(gain);
+            gain.connect(this.ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+          } catch(e) {}
+        }
+
+        playShieldBreak() {
+          if (this.muted || !this.ctx) return;
+          this.playTone(520, 'square', 0.15, 0.3);
+          this.playTone(280, 'sawtooth', 0.25, 0.3);
+        }
+      }
+
+      const sounds = new SoundEngine();
+
+      /* =========================================================================
+         THREE.JS SETUP & COSMIC SCENE
+         ========================================================================= */
+      const container = document.getElementById('game-container');
+      const canvas = document.getElementById('webgl-canvas');
+
+      const scene = new THREE.Scene();
+      // Deep Space background and nebula fog
+      const spaceColor = new THREE.Color(0x060214);
+      scene.background = spaceColor;
+      scene.fog = new THREE.Fog(0x0a041f, 80, 240);
+
+      const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 800);
+
+      const renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+        antialias: true,
+        powerPreference: 'high-performance'
+      });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.outputEncoding = THREE.sRGBEncoding;
+
+      // Cosmic Lighting Rig
+      const ambientLight = new THREE.AmbientLight(0x7c3aed, 0.45); // Violet space ambient
+      scene.add(ambientLight);
+
+      const hemiLight = new THREE.HemisphereLight(0x38bdf8, 0x1e1035, 0.7); // Cyan star light / Deep void
+      scene.add(hemiLight);
+
+      // Starlight Key Light (Sun/Pulsar from high right)
+      const starKeyLight = new THREE.DirectionalLight(0xfff0f5, 1.4);
+      starKeyLight.position.set(35, 55, 30);
+      starKeyLight.castShadow = true;
+      starKeyLight.shadow.mapSize.width = 1024;
+      starKeyLight.shadow.mapSize.height = 1024;
+      starKeyLight.shadow.camera.near = 0.5;
+      starKeyLight.shadow.camera.far = 180;
+      starKeyLight.shadow.camera.left = -25;
+      starKeyLight.shadow.camera.right = 25;
+      starKeyLight.shadow.camera.top = 35;
+      starKeyLight.shadow.camera.bottom = -25;
+      starKeyLight.shadow.bias = -0.0005;
+      scene.add(starKeyLight);
+
+      // Player Neon Glow Light
+      const playerGlowLight = new THREE.PointLight(0x38bdf8, 1.2, 16);
+      scene.add(playerGlowLight);
+
+      /* =========================================================================
+         COSMIC SKYBOX: PLANETS, STARFIELD & NEBULA
+         ========================================================================= */
+      const celestialGroup = new THREE.Group();
+      scene.add(celestialGroup);
+
+      // 1. Dynamic 3D Starfield (1500+ stars)
+      function createStarfield() {
+        const starGeo = new THREE.BufferGeometry();
+        const starCount = 1800;
+        const starPos = new Float32Array(starCount * 3);
+        const starColors = new Float32Array(starCount * 3);
+
+        const colorPalette = [
+          new THREE.Color(0xffffff),
+          new THREE.Color(0x38bdf8),
+          new THREE.Color(0xc084fc),
+          new THREE.Color(0xfacc15),
+          new THREE.Color(0xf43f5e)
+        ];
+
+        for (let i = 0; i < starCount; i++) {
+          // Spread in spherical shell around scene
+          const radius = 250 + Math.random() * 250;
+          const theta = Math.random() * Math.PI * 2;
+          const phi = Math.acos(Math.random() * 2 - 1);
+
+          starPos[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+          starPos[i * 3 + 1] = Math.abs(radius * Math.sin(phi) * Math.sin(theta)) + 10; // Keep mostly above track
+          starPos[i * 3 + 2] = radius * Math.cos(phi);
+
+          const col = colorPalette[Math.floor(Math.random() * colorPalette.length)];
+          starColors[i * 3] = col.r;
+          starColors[i * 3 + 1] = col.g;
+          starColors[i * 3 + 2] = col.b;
+        }
+
+        starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+        starGeo.setAttribute('color', new THREE.BufferAttribute(starColors, 3));
+
+        const starMat = new THREE.PointsMaterial({
+          size: 2.2,
+          vertexColors: true,
+          transparent: true,
+          opacity: 0.85
+        });
+
+        const starMesh = new THREE.Points(starGeo, starMat);
+        celestialGroup.add(starMesh);
+      }
+      createStarfield();
+
+      // 2. Giant Ringed Planet (Saturn-like gas giant)
+      let ringedPlanetGroup;
+      function createRingedPlanet() {
+        ringedPlanetGroup = new THREE.Group();
+        ringedPlanetGroup.position.set(-90, 85, -220);
+
+        // Procedural Planet Texture
+        const canvas = document.createElement('canvas');
+        canvas.width = 512;
+        canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        const grad = ctx.createLinearGradient(0, 0, 0, 256);
+        grad.addColorStop(0.0, '#31104d');
+        grad.addColorStop(0.2, '#7e22ce');
+        grad.addColorStop(0.4, '#c084fc');
+        grad.addColorStop(0.6, '#38bdf8');
+        grad.addColorStop(0.8, '#1e1b4b');
+        grad.addColorStop(1.0, '#4c1d95');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, 512, 256);
+
+        // Cloud stripes
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+        for (let i = 0; i < 20; i++) {
+          ctx.fillRect(0, Math.random() * 256, 512, 4 + Math.random() * 12);
+        }
+
+        const planetTex = new THREE.CanvasTexture(canvas);
+        const planetGeo = new THREE.SphereGeometry(32, 32, 32);
+        const planetMat = new THREE.MeshStandardMaterial({
+          map: planetTex,
+          roughness: 0.6,
+          metalness: 0.2
+        });
+        const planetMesh = new THREE.Mesh(planetGeo, planetMat);
+        ringedPlanetGroup.add(planetMesh);
+
+        // Planetary Rings
+        const ringGeo = new THREE.RingGeometry(42, 68, 64);
+        const ringCanvas = document.createElement('canvas');
+        ringCanvas.width = 256;
+        ringCanvas.height = 1;
+        const rCtx = ringCanvas.getContext('2d');
+        const rGrad = rCtx.createLinearGradient(0, 0, 256, 0);
+        rGrad.addColorStop(0.0, 'rgba(192, 132, 252, 0.0)');
+        rGrad.addColorStop(0.2, 'rgba(236, 72, 153, 0.7)');
+        rGrad.addColorStop(0.5, 'rgba(56, 189, 248, 0.85)');
+        rGrad.addColorStop(0.8, 'rgba(250, 204, 21, 0.6)');
+        rGrad.addColorStop(1.0, 'rgba(192, 132, 252, 0.0)');
+        rCtx.fillStyle = rGrad;
+        rCtx.fillRect(0, 0, 256, 1);
+
+        const ringTex = new THREE.CanvasTexture(ringCanvas);
+        const ringMat = new THREE.MeshBasicMaterial({
+          map: ringTex,
+          side: THREE.DoubleSide,
+          transparent: true,
+          opacity: 0.85
+        });
+        const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+        ringMesh.rotation.x = Math.PI / 2 + 0.35;
+        ringMesh.rotation.y = 0.25;
+        ringedPlanetGroup.add(ringMesh);
+
+        celestialGroup.add(ringedPlanetGroup);
+      }
+      createRingedPlanet();
+
+      // 3. Glowing Cyan Moon & Golden Sun Pulsar
+      function createCosmicMoons() {
+        // Cyan Moon
+        const moonGeo = new THREE.SphereGeometry(14, 24, 24);
+        const moonMat = new THREE.MeshStandardMaterial({
+          color: 0x38bdf8,
+          emissive: 0x0284c7,
+          emissiveIntensity: 0.5,
+          roughness: 0.5
+        });
+        const moonMesh = new THREE.Mesh(moonGeo, moonMat);
+        moonMesh.position.set(110, 65, -190);
+        celestialGroup.add(moonMesh);
+
+        // Distant Glowing Pulsar/Sun
+        const sunGeo = new THREE.SphereGeometry(22, 24, 24);
+        const sunMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+        const sunMesh = new THREE.Mesh(sunGeo, sunMat);
+        sunMesh.position.set(60, 110, -280);
+        celestialGroup.add(sunMesh);
+
+        // Sun Corona Halo
+        const haloGeo = new THREE.SphereGeometry(30, 24, 24);
+        const haloMat = new THREE.MeshBasicMaterial({
+          color: 0xfacc15,
+          transparent: true,
+          opacity: 0.25,
+          side: THREE.BackSide
+        });
+        const haloMesh = new THREE.Mesh(haloGeo, haloMat);
+        sunMesh.add(haloMesh);
+      }
+      createCosmicMoons();
+
+      /* =========================================================================
+         GAME CONFIGURATION & CONSTANTS
+         ========================================================================= */
+      const LANES = [-3.2, 0, 3.2]; // 3 Lanes in Space
+      const BASE_SPEED = 28.0;
+      const MAX_SPEED = 56.0;
+      const SPEED_ACCEL = 0.15;
+      const JUMP_VELOCITY = 13.5;
+      const GRAVITY = 35.0;
+      const SLIDE_DURATION = 0.75;
+      const CHUNK_LENGTH = 60;
+      const NUM_CHUNKS = 7;
+
+      let currentSpeed = BASE_SPEED;
+      let score = 0;
+      let coinsCount = 0;
+      let distanceTraveled = 0;
+      let multiplier = 1;
+      let highScore = parseInt(localStorage.getItem('subway_high_score') || '0', 10);
+      let totalCoins = parseInt(localStorage.getItem('subway_total_coins') || '0', 10);
+
+      const powerups = {
+        magnet: { active: false, timer: 0, maxDuration: 12 },
+        jetpack: { active: false, timer: 0, maxDuration: 8 },
+        hoverboard: { active: false, timer: 0, maxDuration: 15 }
+      };
+
+      /* =========================================================================
+         TEXTURE GENERATORS (100% Procedural Cosmic Textures)
+         ========================================================================= */
+      function createCosmicGridTexture() {
+        const c = document.createElement('canvas');
+        c.width = 256;
+        c.height = 256;
+        const ctx = c.getContext('2d');
+        // Dark translucent space cyber glass
+        ctx.fillStyle = '#0b0621';
+        ctx.fillRect(0, 0, 256, 256);
+
+        // Neon cyber grid lines
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(4, 4, 248, 248);
+
+        ctx.strokeStyle = 'rgba(192, 132, 252, 0.4)';
+        ctx.lineWidth = 1.5;
+        for (let i = 32; i < 256; i += 32) {
+          ctx.beginPath();
+          ctx.moveTo(i, 0);
+          ctx.lineTo(i, 256);
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(0, i);
+          ctx.lineTo(256, i);
+          ctx.stroke();
+        }
+
+        // Center glowing node
+        ctx.fillStyle = '#c084fc';
+        ctx.fillRect(124, 124, 8, 8);
+
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+      }
+
+      function createHazardLaserTexture() {
+        const c = document.createElement('canvas');
+        c.width = 256;
+        c.height = 256;
+        const ctx = c.getContext('2d');
+        ctx.fillStyle = '#701a75';
+        ctx.fillRect(0, 0, 256, 256);
+
+        ctx.fillStyle = '#f43f5e';
+        const stripeWidth = 32;
+        for (let x = -256; x < 512; x += stripeWidth * 2) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x + stripeWidth, 0);
+          ctx.lineTo(x + stripeWidth - 256, 256);
+          ctx.lineTo(x - 256, 256);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        const tex = new THREE.CanvasTexture(c);
+        tex.wrapS = THREE.RepeatWrapping;
+        tex.wrapT = THREE.RepeatWrapping;
+        return tex;
+      }
+
+      // Pre-baked Shared Cosmic Materials
+      const cosmicGridTex = createCosmicGridTexture();
+      cosmicGridTex.repeat.set(2, 8);
+      const runwayMaterial = new THREE.MeshStandardMaterial({
+        map: cosmicGridTex,
+        roughness: 0.3,
+        metalness: 0.7,
+        emissive: 0x1e1045,
+        emissiveIntensity: 0.3
+      });
+
+      const neonRailMaterial = new THREE.MeshBasicMaterial({
+        color: 0x00f5ff
+      });
+
+      const neonRailPurpleMat = new THREE.MeshBasicMaterial({
+        color: 0xd946ef
+      });
+
+      const energyTieMaterial = new THREE.MeshStandardMaterial({
+        color: 0x3b0764,
+        emissive: 0x8b5cf6,
+        emissiveIntensity: 0.6,
+        roughness: 0.3,
+        metalness: 0.8
+      });
+
+      const hazardLaserTex = createHazardLaserTexture();
+      const laserBarrierMaterial = new THREE.MeshBasicMaterial({
+        map: hazardLaserTex,
+        transparent: true,
+        opacity: 0.95
+      });
+
+      const chromeMaterial = new THREE.MeshStandardMaterial({
+        color: 0xe2e8f0,
+        metalness: 0.95,
+        roughness: 0.15
+      });
+
+      const goldStardustMaterial = new THREE.MeshStandardMaterial({
+        color: 0xfacc15,
+        metalness: 0.95,
+        roughness: 0.15,
+        emissive: 0xca8a04,
+        emissiveIntensity: 0.5
+      });
+
+      /* =========================================================================
+         ASTRO-SURFER CHARACTER (Cosmic Astronaut 3D Model)
+         ========================================================================= */
+      class Player {
+        constructor() {
+          this.group = new THREE.Group();
+          this.lane = 1;
+          this.targetX = LANES[1];
+          this.currentX = LANES[1];
+
+          this.y = 0;
+          this.velocityY = 0;
+          this.isGrounded = true;
+          this.isJumping = false;
+          this.isSliding = false;
+          this.slideTimer = 0;
+
+          this.rollAngle = 0;
+          this.runCycle = 0;
+
+          this.box = new THREE.Box3();
+
+          this.buildModel();
+          scene.add(this.group);
+          this.reset();
+        }
+
+        buildModel() {
+          this.rootNode = new THREE.Group();
+          this.group.add(this.rootNode);
+
+          // 1. Sleek Cyber Spacesuit Torso
+          const torsoGeo = new THREE.BoxGeometry(0.85, 0.95, 0.55);
+          const suitMat = new THREE.MeshStandardMaterial({
+            color: 0xf8fafc, // Pearl White armor
+            roughness: 0.25,
+            metalness: 0.6
+          });
+          this.torso = new THREE.Mesh(torsoGeo, suitMat);
+          this.torso.position.y = 1.15;
+          this.torso.castShadow = true;
+          this.rootNode.add(this.torso);
+
+          // Glowing Arc Reactor Core on Chest
+          const coreGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.12, 16);
+          const coreMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+          const core = new THREE.Mesh(coreGeo, coreMat);
+          core.rotation.x = Math.PI / 2;
+          core.position.set(0, 0.1, 0.26);
+          this.torso.add(core);
+
+          // Cyan Accent Stripes on Body
+          const stripeGeo = new THREE.BoxGeometry(0.87, 0.12, 0.57);
+          const stripeMat = new THREE.MeshBasicMaterial({ color: 0x8b5cf6 });
+          const stripe1 = new THREE.Mesh(stripeGeo, stripeMat);
+          stripe1.position.y = -0.2;
+          this.torso.add(stripe1);
+
+          // 2. Astronaut Helmet with Glowing Cyber Visor
+          const helmetGeo = new THREE.BoxGeometry(0.65, 0.65, 0.65);
+          const helmet = new THREE.Mesh(helmetGeo, suitMat);
+          helmet.position.y = 0.82;
+          this.torso.add(helmet);
+
+          // Gold/Cyan Reflective Visor
+          const visorGeo = new THREE.BoxGeometry(0.58, 0.35, 0.2);
+          const visorMat = new THREE.MeshStandardMaterial({
+            color: 0xfacc15,
+            metalness: 0.95,
+            roughness: 0.1,
+            emissive: 0xb45309,
+            emissiveIntensity: 0.4
+          });
+          const visor = new THREE.Mesh(visorGeo, visorMat);
+          visor.position.set(0, 0.05, 0.28);
+          helmet.add(visor);
+
+          // Helmet Comms Antenna
+          const antGeo = new THREE.CylinderGeometry(0.03, 0.03, 0.35, 8);
+          const ant = new THREE.Mesh(antGeo, chromeMaterial);
+          ant.position.set(0.35, 0.35, -0.1);
+          helmet.add(ant);
+
+          const antTipGeo = new THREE.SphereGeometry(0.06, 8, 8);
+          const antTipMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+          const antTip = new THREE.Mesh(antTipGeo, antTipMat);
+          antTip.position.y = 0.2;
+          ant.add(antTip);
+
+          // 3. Cyber Arms & Gauntlets
+          const armGeo = new THREE.BoxGeometry(0.24, 0.72, 0.24);
+          const armMat = new THREE.MeshStandardMaterial({ color: 0x1e1b4b, roughness: 0.3, metalness: 0.7 });
+
+          this.leftArm = new THREE.Group();
+          this.leftArm.position.set(-0.55, 0.35, 0);
+          const leftArmMesh = new THREE.Mesh(armGeo, armMat);
+          leftArmMesh.position.y = -0.3;
+          leftArmMesh.castShadow = true;
+          this.leftArm.add(leftArmMesh);
+          this.torso.add(this.leftArm);
+
+          this.rightArm = new THREE.Group();
+          this.rightArm.position.set(0.55, 0.35, 0);
+          const rightArmMesh = new THREE.Mesh(armGeo, armMat);
+          rightArmMesh.position.y = -0.3;
+          rightArmMesh.castShadow = true;
+          this.rightArm.add(rightArmMesh);
+          this.torso.add(this.rightArm);
+
+          // 4. Armored Cyber Legs & Magnetic Boots
+          const legGeo = new THREE.BoxGeometry(0.28, 0.72, 0.28);
+          const bootGeo = new THREE.BoxGeometry(0.32, 0.2, 0.5);
+          const bootMat = new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.3, metalness: 0.8 });
+
+          this.leftLeg = new THREE.Group();
+          this.leftLeg.position.set(-0.24, 0.7, 0);
+          const leftLegMesh = new THREE.Mesh(legGeo, suitMat);
+          leftLegMesh.position.y = -0.35;
+          leftLegMesh.castShadow = true;
+          this.leftLeg.add(leftLegMesh);
+          const leftBoot = new THREE.Mesh(bootGeo, bootMat);
+          leftBoot.position.set(0, -0.62, 0.08);
+          this.leftLeg.add(leftBoot);
+          this.rootNode.add(this.leftLeg);
+
+          this.rightLeg = new THREE.Group();
+          this.rightLeg.position.set(0.24, 0.7, 0);
+          const rightLegMesh = new THREE.Mesh(legGeo, suitMat);
+          rightLegMesh.position.y = -0.35;
+          rightLegMesh.castShadow = true;
+          this.rightLeg.add(rightLegMesh);
+          const rightBoot = new THREE.Mesh(bootGeo, bootMat);
+          rightBoot.position.set(0, -0.62, 0.08);
+          this.rightLeg.add(rightBoot);
+          this.rootNode.add(this.rightLeg);
+
+          // 5. Warp Jetpack (mounted on back)
+          this.jetpackMesh = new THREE.Group();
+          const tankGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.7, 8);
+          const tankMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9, roughness: 0.2 });
+          const tankL = new THREE.Mesh(tankGeo, tankMat);
+          tankL.position.set(-0.18, 0, -0.35);
+          this.jetpackMesh.add(tankL);
+          const tankR = tankL.clone();
+          tankR.position.x = 0.18;
+          this.jetpackMesh.add(tankR);
+
+          const nozzleGeo = new THREE.ConeGeometry(0.12, 0.25, 8);
+          const nozzleMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+          const nozL = new THREE.Mesh(nozzleGeo, nozzleMat);
+          nozL.rotation.x = Math.PI;
+          nozL.position.set(-0.18, -0.4, -0.35);
+          this.jetpackMesh.add(nozL);
+          const nozR = nozL.clone();
+          nozR.position.x = 0.18;
+          this.jetpackMesh.add(nozR);
+
+          this.jetpackMesh.visible = false;
+          this.torso.add(this.jetpackMesh);
+
+          // 6. Cosmic Hoverboard
+          this.hoverboardMesh = new THREE.Group();
+          const boardGeo = new THREE.BoxGeometry(0.8, 0.08, 1.8);
+          const boardMat = new THREE.MeshStandardMaterial({
+            color: 0x7c3aed,
+            metalness: 0.8,
+            roughness: 0.2,
+            emissive: 0x4c1d95,
+            emissiveIntensity: 0.5
+          });
+          const boardDeck = new THREE.Mesh(boardGeo, boardMat);
+          boardDeck.position.y = 0.04;
+          this.hoverboardMesh.add(boardDeck);
+
+          // Glowing Neon Edges
+          const edgeGeo = new THREE.BoxGeometry(0.72, 0.02, 1.6);
+          const edgeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+          const edgeStrip = new THREE.Mesh(edgeGeo, edgeMat);
+          edgeStrip.position.y = -0.02;
+          this.hoverboardMesh.add(edgeStrip);
+
+          // Spherical Forcefield (when shield is active)
+          const shieldGeo = new THREE.SphereGeometry(1.4, 16, 16);
+          const shieldMat = new THREE.MeshBasicMaterial({
+            color: 0x38bdf8,
+            transparent: true,
+            opacity: 0.25,
+            wireframe: true
+          });
+          this.shieldSphere = new THREE.Mesh(shieldGeo, shieldMat);
+          this.shieldSphere.position.y = 1.0;
+          this.hoverboardMesh.add(this.shieldSphere);
+
+          this.hoverboardMesh.visible = false;
+          this.rootNode.add(this.hoverboardMesh);
+
+          // 7. Ground Contact Shadow / Plasma Projection
+          const shadowGeo = new THREE.PlaneGeometry(1.6, 2.2);
+          const shadowMat = new THREE.MeshBasicMaterial({
+            color: 0x000000,
+            transparent: true,
+            opacity: 0.5,
+            depthWrite: false
+          });
+          this.shadowPlane = new THREE.Mesh(shadowGeo, shadowMat);
+          this.shadowPlane.rotation.x = -Math.PI / 2;
+          this.shadowPlane.position.y = 0.02;
+          this.group.add(this.shadowPlane);
+        }
+
+        reset() {
+          this.lane = 1;
+          this.targetX = LANES[1];
+          this.currentX = LANES[1];
+          this.y = 0;
+          this.velocityY = 0;
+          this.isGrounded = true;
+          this.isJumping = false;
+          this.isSliding = false;
+          this.slideTimer = 0;
+          this.rollAngle = 0;
+          this.group.position.set(this.currentX, 0, 0);
+          this.rootNode.position.set(0, 0, 0);
+          this.rootNode.rotation.set(0, 0, 0);
+          this.hoverboardMesh.visible = false;
+          this.jetpackMesh.visible = false;
+        }
+
+        switchLane(dir) {
+          if (currentState !== STATE.PLAYING) return;
+          const nextLane = this.lane + dir;
+          if (nextLane >= 0 && nextLane <= 2) {
+            this.lane = nextLane;
+            this.targetX = LANES[this.lane];
+            this.rollAngle = -dir * 0.35;
+            sounds.playTone(420, 'sine', 0.08, 0.15);
+          }
+        }
+
+        jump() {
+          if (currentState !== STATE.PLAYING) return;
+          if (powerups.jetpack.active) return;
+          if (this.isGrounded) {
+            this.velocityY = JUMP_VELOCITY;
+            this.isGrounded = false;
+            this.isJumping = true;
+            this.isSliding = false;
+            sounds.playJump();
+          }
+        }
+
+        slide() {
+          if (currentState !== STATE.PLAYING) return;
+          if (powerups.jetpack.active) return;
+          if (!this.isGrounded) {
+            this.velocityY = -24.0; // Fast-dive from mid-air
+          }
+          this.isSliding = true;
+          this.slideTimer = SLIDE_DURATION;
+          sounds.playSlide();
+        }
+
+        update(delta) {
+          // Smooth horizontal lane transition
+          const lerpFactor = 1.0 - Math.exp(-18 * delta);
+          this.currentX += (this.targetX - this.currentX) * lerpFactor;
+          this.group.position.x = this.currentX;
+
+          // Re-center bank roll smoothly
+          this.rollAngle += (0 - this.rollAngle) * lerpFactor;
+          this.rootNode.rotation.z = this.rollAngle;
+
+          // Jetpack Altitude vs Normal Physics
+          if (powerups.jetpack.active) {
+            const targetJetY = 8.5;
+            this.y += (targetJetY - this.y) * (1.0 - Math.exp(-6 * delta));
+            this.isGrounded = false;
+            this.isJumping = false;
+            this.isSliding = false;
+            this.jetpackMesh.visible = true;
+            this.hoverboardMesh.visible = false;
+          } else {
+            this.jetpackMesh.visible = false;
+            this.hoverboardMesh.visible = powerups.hoverboard.active;
+
+            this.velocityY -= GRAVITY * delta;
+            this.y += this.velocityY * delta;
+
+            if (this.y <= 0) {
+              this.y = 0;
+              this.velocityY = 0;
+              this.isGrounded = true;
+              this.isJumping = false;
+            } else {
+              this.isGrounded = false;
+            }
+          }
+
+          this.group.position.y = this.y;
+
+          if (this.isSliding) {
+            this.slideTimer -= delta;
+            if (this.slideTimer <= 0) {
+              this.isSliding = false;
+            }
+          }
+
+          this.animate(delta);
+          this.updateHitbox();
+
+          const heightRatio = Math.max(0, 1 - this.y / 10);
+          this.shadowPlane.scale.set(heightRatio, heightRatio, 1);
+          this.shadowPlane.material.opacity = 0.5 * heightRatio;
+          this.shadowPlane.position.y = -this.y + 0.02;
+
+          playerGlowLight.position.set(this.currentX, this.y + 2.5, this.group.position.z + 1.5);
+        }
+
+        animate(delta) {
+          if (currentState === STATE.GAMEOVER) return;
+
+          if (this.isSliding) {
+            this.rootNode.rotation.x = 0.95;
+            this.rootNode.position.y = -0.35;
+            this.leftArm.rotation.x = -1.2;
+            this.rightArm.rotation.x = -1.2;
+            this.leftLeg.rotation.x = 0.45;
+            this.rightLeg.rotation.x = 0.45;
+          } else if (powerups.jetpack.active) {
+            this.rootNode.rotation.x = 0.45;
+            this.rootNode.position.y = 0;
+            this.leftArm.rotation.x = 0.2;
+            this.rightArm.rotation.x = 0.2;
+            this.leftLeg.rotation.x = 0.3;
+            this.rightLeg.rotation.x = -0.1;
+          } else if (!this.isGrounded) {
+            this.rootNode.rotation.x = 0.15;
+            this.rootNode.position.y = 0;
+            this.leftArm.rotation.x = -1.0;
+            this.rightArm.rotation.x = -1.0;
+            this.leftLeg.rotation.x = -0.85;
+            this.rightLeg.rotation.x = -0.55;
+          } else if (powerups.hoverboard.active) {
+            this.rootNode.rotation.x = 0;
+            this.rootNode.position.y = 0;
+            this.rootNode.rotation.y = 0.5;
+            this.leftArm.rotation.x = 0.4;
+            this.rightArm.rotation.x = -0.4;
+            this.leftLeg.rotation.x = 0;
+            this.rightLeg.rotation.x = 0;
+          } else {
+            this.rootNode.rotation.x = 0.1;
+            this.rootNode.rotation.y = 0;
+            this.rootNode.position.y = Math.sin(this.runCycle * 2) * 0.07;
+
+            this.runCycle += delta * (currentSpeed * 0.4);
+            const swing = Math.sin(this.runCycle) * 0.75;
+            this.leftArm.rotation.x = swing;
+            this.rightArm.rotation.x = -swing;
+            this.leftLeg.rotation.x = -swing;
+            this.rightLeg.rotation.x = swing;
+          }
+        }
+
+        updateHitbox() {
+          const pos = this.group.position;
+          if (this.isSliding) {
+            this.box.min.set(pos.x - 0.5, pos.y, pos.z - 0.8);
+            this.box.max.set(pos.x + 0.5, pos.y + 0.8, pos.z + 0.8);
+          } else {
+            this.box.min.set(pos.x - 0.5, pos.y, pos.z - 0.5);
+            this.box.max.set(pos.x + 0.5, pos.y + 1.8, pos.z + 0.5);
+          }
+        }
+      }
+
+      const player = new Player();
+
+      /* =========================================================================
+         PARTICLES SYSTEM (Cosmic Sparks, Jetpack Trails, Stardust)
+         ========================================================================= */
+      class ParticleSystem {
+        constructor() {
+          this.particles = [];
+          this.geo = new THREE.BoxGeometry(0.14, 0.14, 0.14);
+        }
+
+        spawnSparks(x, y, z, count = 8, color = 0x38bdf8) {
+          const mat = new THREE.MeshBasicMaterial({ color: color });
+          for (let i = 0; i < count; i++) {
+            const mesh = new THREE.Mesh(this.geo, mat);
+            mesh.position.set(x + (Math.random() - 0.5) * 0.4, y + 0.1, z + (Math.random() - 0.5) * 0.4);
+            scene.add(mesh);
+            this.particles.push({
+              mesh: mesh,
+              vx: (Math.random() - 0.5) * 6,
+              vy: Math.random() * 5 + 2,
+              vz: Math.random() * 4 + 2,
+              life: 0.35,
+              maxLife: 0.35
+            });
+          }
+        }
+
+        spawnJetpackFlames(x, y, z) {
+          const colors = [0x38bdf8, 0x818cf8, 0xc084fc, 0x06b6d4];
+          const color = colors[Math.floor(Math.random() * colors.length)];
+          const mat = new THREE.MeshBasicMaterial({ color: color });
+          const mesh = new THREE.Mesh(this.geo, mat);
+          mesh.position.set(x + (Math.random() - 0.5) * 0.3, y, z + 0.3);
+          scene.add(mesh);
+          this.particles.push({
+            mesh: mesh,
+            vx: (Math.random() - 0.5) * 1.5,
+            vy: -Math.random() * 3 - 2,
+            vz: Math.random() * 8 + 14,
+            life: 0.28,
+            maxLife: 0.28
+          });
+        }
+
+        update(delta) {
+          for (let i = this.particles.length - 1; i >= 0; i--) {
+            const p = this.particles[i];
+            p.life -= delta;
+            if (p.life <= 0) {
+              scene.remove(p.mesh);
+              this.particles.splice(i, 1);
+            } else {
+              p.mesh.position.x += p.vx * delta;
+              p.mesh.position.y += p.vy * delta;
+              p.mesh.position.z += p.vz * delta;
+              const scale = p.life / p.maxLife;
+              p.mesh.scale.set(scale, scale, scale);
+            }
+          }
+        }
+
+        clear() {
+          this.particles.forEach(p => scene.remove(p.mesh));
+          this.particles = [];
+        }
+      }
+
+      const particles = new ParticleSystem();
+
+      /* =========================================================================
+         COSMIC TRACK CHUNK & OBSTACLES
+         ========================================================================= */
+      class TrackChunk {
+        constructor(index) {
+          this.group = new THREE.Group();
+          this.index = index;
+          this.z = -index * CHUNK_LENGTH;
+          this.group.position.z = this.z;
+
+          this.obstacles = [];
+          this.coins = [];
+          this.powerupItems = [];
+          this.movingTrains = [];
+
+          this.buildEnvironment();
+          scene.add(this.group);
+        }
+
+        buildEnvironment() {
+          // 1. Photonic Translucent Runway Bridge (suspended in space)
+          const groundGeo = new THREE.BoxGeometry(15, 0.4, CHUNK_LENGTH);
+          const ground = new THREE.Mesh(groundGeo, runwayMaterial);
+          ground.position.set(0, -0.2, -CHUNK_LENGTH / 2);
+          ground.receiveShadow = true;
+          this.group.add(ground);
+
+          // Glowing Neon Edges along the runway
+          const edgeGeo = new THREE.BoxGeometry(0.3, 0.5, CHUNK_LENGTH);
+          const edgeL = new THREE.Mesh(edgeGeo, neonRailMaterial);
+          edgeL.position.set(-7.5, 0.1, -CHUNK_LENGTH / 2);
+          this.group.add(edgeL);
+          const edgeR = new THREE.Mesh(edgeGeo, neonRailMaterial);
+          edgeR.position.set(7.5, 0.1, -CHUNK_LENGTH / 2);
+          this.group.add(edgeR);
+
+          // 2. Neon Laser Rails & Energy Cross-Ties for 3 Lanes
+          LANES.forEach((laneX, laneIdx) => {
+            const railGeo = new THREE.BoxGeometry(0.12, 0.18, CHUNK_LENGTH);
+            const railMat = (laneIdx === 1) ? neonRailMaterial : neonRailPurpleMat;
+
+            const rail1 = new THREE.Mesh(railGeo, railMat);
+            rail1.position.set(laneX - 0.75, 0.09, -CHUNK_LENGTH / 2);
+            this.group.add(rail1);
+
+            const rail2 = new THREE.Mesh(railGeo, railMat);
+            rail2.position.set(laneX + 0.75, 0.09, -CHUNK_LENGTH / 2);
+            this.group.add(rail2);
+
+            // Glowing Energy Quantum Ties
+            const tieGeo = new THREE.BoxGeometry(1.9, 0.1, 0.3);
+            for (let z = -1; z > -CHUNK_LENGTH; z -= 3.0) {
+              const tie = new THREE.Mesh(tieGeo, energyTieMaterial);
+              tie.position.set(laneX, 0.04, z);
+              this.group.add(tie);
+            }
+          });
+
+          // 3. Orbital Warp Ring Gate
+          this.buildOrbitalGate();
+
+          // 4. Floating Asteroids & Celestial Spire Crystals
+          this.buildCosmicScenery();
+        }
+
+        buildOrbitalGate() {
+          const gate = new THREE.Group();
+          gate.position.set(0, 0, -CHUNK_LENGTH / 2);
+
+          // Giant Torus Ring
+          const ringGeo = new THREE.TorusGeometry(8.5, 0.45, 8, 24);
+          const ringMat = new THREE.MeshStandardMaterial({
+            color: 0x1e1b4b,
+            metalness: 0.9,
+            roughness: 0.2,
+            emissive: 0x7c3aed,
+            emissiveIntensity: 0.6
+          });
+          const ring = new THREE.Mesh(ringGeo, ringMat);
+          ring.position.y = 4.2;
+          gate.add(ring);
+
+          // Glowing energy nodes on the ring
+          for (let a = 0; a < Math.PI * 2; a += Math.PI / 4) {
+            const nodeGeo = new THREE.SphereGeometry(0.5, 8, 8);
+            const nodeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+            const node = new THREE.Mesh(nodeGeo, nodeMat);
+            node.position.set(Math.cos(a) * 8.5, 4.2 + Math.sin(a) * 8.5, 0);
+            gate.add(node);
+          }
+
+          this.group.add(gate);
+        }
+
+        buildCosmicScenery() {
+          // Floating Low-Poly Asteroid rocks in space
+          const rockColors = [0x4c1d95, 0x1e1b4b, 0x312e81, 0x0f172a];
+          for (let side = -1; side <= 1; side += 2) {
+            for (let z = -6; z > -CHUNK_LENGTH; z -= 20) {
+              const rSize = 3 + Math.random() * 6;
+              const rGeo = new THREE.DodecahedronGeometry(rSize, 0);
+              const rMat = new THREE.MeshStandardMaterial({
+                color: rockColors[Math.floor(Math.random() * rockColors.length)],
+                roughness: 0.7,
+                metalness: 0.3
+              });
+              const rock = new THREE.Mesh(rGeo, rMat);
+              rock.position.set(side * (16 + Math.random() * 12), -2 + Math.random() * 20, z);
+              rock.rotation.set(Math.random() * 3, Math.random() * 3, 0);
+              this.group.add(rock);
+            }
+          }
+        }
+
+        clearDynamicItems() {
+          this.obstacles.forEach(obs => {
+            this.group.remove(obs.mesh);
+            if (obs.mesh.geometry) obs.mesh.geometry.dispose();
+          });
+          this.obstacles = [];
+
+          this.coins.forEach(c => {
+            this.group.remove(c.mesh);
+          });
+          this.coins = [];
+
+          this.powerupItems.forEach(p => {
+            this.group.remove(p.mesh);
+          });
+          this.powerupItems = [];
+
+          this.movingTrains = [];
+        }
+
+        populate(difficultyRatio) {
+          this.clearDynamicItems();
+          if (Math.abs(this.z) < 60) {
+            this.spawnCoinLine(1, -15, 6);
+            return;
+          }
+
+          const patternType = Math.floor(Math.random() * 5);
+          const zOffset1 = -15;
+          const zOffset2 = -38;
+
+          switch (patternType) {
+            case 0:
+              this.spawnPlasmaHurdle(0, zOffset1);
+              this.spawnIonGantry(1, zOffset1);
+              this.spawnCoinLine(2, zOffset1 - 5, 5);
+              this.spawnPlasmaHurdle(2, zOffset2);
+              this.spawnCoinLine(0, zOffset2 - 5, 5);
+              break;
+
+            case 1:
+              // Stationary Space Cruiser with Photon Ramp
+              this.spawnSpaceCruiser(1, zOffset1 - 8, true);
+              this.spawnPlasmaHurdle(0, zOffset2);
+              this.spawnCoinLine(2, zOffset1, 6);
+              break;
+
+            case 2:
+              // Moving Warp Frigate
+              if (difficultyRatio > 0.15 && Math.random() > 0.3) {
+                this.spawnMovingCruiser(Math.random() > 0.5 ? 0 : 2, zOffset1);
+                this.spawnIonGantry(1, zOffset2);
+                this.spawnCoinLine(1, zOffset1, 5);
+              } else {
+                this.spawnSpaceCruiser(0, zOffset1, false);
+                this.spawnPlasmaHurdle(1, zOffset2);
+                this.spawnCoinLine(2, zOffset1, 6);
+              }
+              break;
+
+            case 3:
+              this.spawnPlasmaHurdle(0, zOffset1);
+              this.spawnPlasmaHurdle(2, zOffset1);
+              this.spawnCoinLine(1, zOffset1 - 4, 6);
+              this.spawnIonGantry(1, zOffset2);
+              this.spawnCoinLine(0, zOffset2 - 4, 5);
+              break;
+
+            case 4:
+            default:
+              this.spawnSpaceCruiser(0, zOffset1 - 5, false);
+              this.spawnPlasmaHurdle(2, zOffset1);
+              this.spawnRandomPowerup(1, zOffset1);
+              this.spawnCoinLine(1, zOffset2, 5);
+              break;
+          }
+
+          if (Math.random() < 0.25) {
+            const freeLane = Math.floor(Math.random() * 3);
+            this.spawnRandomPowerup(freeLane, zOffset2);
+          }
+        }
+
+        spawnPlasmaHurdle(laneIdx, zPos) {
+          const group = new THREE.Group();
+          group.position.set(LANES[laneIdx], 0, zPos);
+
+          // Glowing Red/Magenta Laser Barrier
+          const barGeo = new THREE.BoxGeometry(2.3, 0.45, 0.16);
+          const bar = new THREE.Mesh(barGeo, laserBarrierMaterial);
+          bar.position.y = 0.85;
+          group.add(bar);
+
+          // Support Cyber Pylons
+          const legGeo = new THREE.BoxGeometry(0.2, 0.9, 0.4);
+          const legL = new THREE.Mesh(legGeo, chromeMaterial);
+          legL.position.set(-1.0, 0.45, 0);
+          group.add(legL);
+
+          const legR = legL.clone();
+          legR.position.x = 1.0;
+          group.add(legR);
+
+          // Warning Beacons
+          const beaconGeo = new THREE.SphereGeometry(0.18, 8, 8);
+          const beaconMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e });
+          const b1 = new THREE.Mesh(beaconGeo, beaconMat);
+          b1.position.set(-0.9, 1.0, 0);
+          group.add(b1);
+          const b2 = b1.clone();
+          b2.position.x = 0.9;
+          group.add(b2);
+
+          this.group.add(group);
+
+          this.obstacles.push({
+            type: 'hurdle',
+            mesh: group,
+            lane: laneIdx,
+            box: new THREE.Box3(),
+            minY: 0,
+            maxY: 1.1,
+            localZ: zPos,
+            halfWidth: 1.15,
+            halfDepth: 0.35
+          });
+
+          this.spawnCoinArc(laneIdx, zPos);
+        }
+
+        spawnIonGantry(laneIdx, zPos) {
+          const group = new THREE.Group();
+          group.position.set(LANES[laneIdx], 0, zPos);
+
+          // Tall support poles
+          const poleGeo = new THREE.CylinderGeometry(0.12, 0.12, 3.2, 8);
+          const poleL = new THREE.Mesh(poleGeo, chromeMaterial);
+          poleL.position.set(-1.15, 1.6, 0);
+          group.add(poleL);
+
+          const poleR = poleL.clone();
+          poleR.position.x = 1.15;
+          group.add(poleR);
+
+          // Shimmering Ion Beam Clearance Banner (Height 2.4, bottom gap 1.25m - Slide under!)
+          const bannerGeo = new THREE.BoxGeometry(2.4, 1.1, 0.15);
+          const banner = new THREE.Mesh(bannerGeo, laserBarrierMaterial);
+          banner.position.y = 2.4;
+          group.add(banner);
+
+          this.group.add(group);
+
+          this.obstacles.push({
+            type: 'high_sign',
+            mesh: group,
+            lane: laneIdx,
+            box: new THREE.Box3(),
+            minY: 1.15,
+            maxY: 3.0,
+            localZ: zPos,
+            halfWidth: 1.15,
+            halfDepth: 0.35
+          });
+
+          for (let offset = -2; offset <= 2; offset += 2) {
+            this.spawnSingleCoin(LANES[laneIdx], 0.45, zPos + offset);
+          }
+        }
+
+        spawnSpaceCruiser(laneIdx, zPos, withRamp = false) {
+          const cruiser = this.createCruiserMesh(withRamp, 0x1e1b4b);
+          cruiser.position.set(LANES[laneIdx], 0, zPos);
+          this.group.add(cruiser);
+
+          const cruiserLength = 16.0;
+          this.obstacles.push({
+            type: 'train',
+            mesh: cruiser,
+            lane: laneIdx,
+            box: new THREE.Box3(),
+            minY: 0,
+            maxY: 3.5,
+            localZ: zPos,
+            halfWidth: 1.35,
+            halfDepth: cruiserLength / 2,
+            hasRamp: withRamp
+          });
+
+          if (withRamp) {
+            for (let z = zPos + cruiserLength / 2 - 2; z > zPos - cruiserLength / 2; z -= 2.2) {
+              this.spawnSingleCoin(LANES[laneIdx], 3.8, z);
+            }
+          }
+        }
+
+        spawnMovingCruiser(laneIdx, zPos) {
+          const cruiser = this.createCruiserMesh(false, 0x4c0519); // Alien crimson cruiser
+          cruiser.position.set(LANES[laneIdx], 0, zPos);
+          this.group.add(cruiser);
+
+          const cruiserData = {
+            type: 'moving_train',
+            mesh: cruiser,
+            lane: laneIdx,
+            box: new THREE.Box3(),
+            minY: 0,
+            maxY: 3.5,
+            localZ: zPos,
+            halfWidth: 1.35,
+            halfDepth: 8.0,
+            speed: 15.0
+          };
+
+          this.obstacles.push(cruiserData);
+          this.movingTrains.push(cruiserData);
+        }
+
+        createCruiserMesh(withRamp = false, hullColor = 0x1e1b4b) {
+          const ship = new THREE.Group();
+          const length = 16.0;
+          const width = 2.6;
+          const height = 3.4;
+
+          // Main Interstellar Hull
+          const bodyGeo = new THREE.BoxGeometry(width, height, length);
+          const bodyMat = new THREE.MeshStandardMaterial({
+            color: hullColor,
+            roughness: 0.35,
+            metalness: 0.8
+          });
+          const body = new THREE.Mesh(bodyGeo, bodyMat);
+          body.position.y = height / 2 + 0.15;
+          body.castShadow = true;
+          body.receiveShadow = true;
+          ship.add(body);
+
+          // Glowing Neon Circuit Stripe
+          const stripeGeo = new THREE.BoxGeometry(width + 0.05, 0.35, length + 0.05);
+          const stripeMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+          const stripe = new THREE.Mesh(stripeGeo, stripeMat);
+          stripe.position.y = 1.9;
+          ship.add(stripe);
+
+          // Aerodynamic Cockpit Canopy
+          const frontWindowGeo = new THREE.BoxGeometry(width * 0.85, 1.1, 0.4);
+          const glassMat = new THREE.MeshStandardMaterial({
+            color: 0x06b6d4,
+            metalness: 0.95,
+            roughness: 0.1,
+            emissive: 0x0284c7,
+            emissiveIntensity: 0.5
+          });
+          const frontWindow = new THREE.Mesh(frontWindowGeo, glassMat);
+          frontWindow.position.set(0, 2.3, length / 2 + 0.05);
+          ship.add(frontWindow);
+
+          // Glowing Ion Searchlights
+          const lightGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.2, 12);
+          const lightMat = new THREE.MeshBasicMaterial({ color: 0x00f5ff });
+          const lightL = new THREE.Mesh(lightGeo, lightMat);
+          lightL.rotation.x = Math.PI / 2;
+          lightL.position.set(-0.8, 1.1, length / 2 + 0.1);
+          ship.add(lightL);
+
+          const lightR = lightL.clone();
+          lightR.position.x = 0.8;
+          ship.add(lightR);
+
+          // Rear Hyperdrive Thruster Nozzles
+          const thrusterGeo = new THREE.CylinderGeometry(0.5, 0.65, 0.6, 12);
+          const thrusterMat = new THREE.MeshBasicMaterial({ color: 0xc084fc });
+          const thL = new THREE.Mesh(thrusterGeo, thrusterMat);
+          thL.rotation.x = Math.PI / 2;
+          thL.position.set(-0.7, 1.8, -length / 2 - 0.2);
+          ship.add(thL);
+
+          const thR = thL.clone();
+          thR.position.x = 0.7;
+          ship.add(thR);
+
+          // Photon Energy Ramp
+          if (withRamp) {
+            const rampGeo = new THREE.BoxGeometry(2.4, 0.15, 4.5);
+            const rampMat = new THREE.MeshStandardMaterial({
+              color: 0x8b5cf6,
+              emissive: 0x6d28d9,
+              emissiveIntensity: 0.6,
+              metalness: 0.7
+            });
+            const ramp = new THREE.Mesh(rampGeo, rampMat);
+            ramp.rotation.x = 0.65;
+            ramp.position.set(0, 1.7, length / 2 + 1.8);
+            ship.add(ramp);
+          }
+
+          return ship;
+        }
+
+        spawnSingleCoin(x, y, z) {
+          // Stardust Star-Coin
+          const coinGeo = new THREE.CylinderGeometry(0.42, 0.42, 0.12, 8);
+          const mesh = new THREE.Mesh(coinGeo, goldStardustMaterial);
+          mesh.rotation.x = Math.PI / 2;
+          mesh.position.set(x, y, z);
+          mesh.castShadow = true;
+          this.group.add(mesh);
+
+          this.coins.push({
+            mesh: mesh,
+            baseY: y,
+            rotSpeed: 3.8,
+            collected: false
+          });
+        }
+
+        spawnCoinLine(laneIdx, zStart, count = 5) {
+          for (let i = 0; i < count; i++) {
+            this.spawnSingleCoin(LANES[laneIdx], 0.9, zStart - i * 2.2);
+          }
+        }
+
+        spawnCoinArc(laneIdx, zHurdle) {
+          const arcHeights = [0.9, 1.8, 2.5, 1.8, 0.9];
+          const zOffsets = [4.0, 2.0, 0.0, -2.0, -4.0];
+          for (let i = 0; i < 5; i++) {
+            this.spawnSingleCoin(LANES[laneIdx], arcHeights[i], zHurdle + zOffsets[i]);
+          }
+        }
+
+        spawnRandomPowerup(laneIdx, zPos) {
+          const types = ['magnet', 'jetpack', 'hoverboard'];
+          const type = types[Math.floor(Math.random() * types.length)];
+
+          const group = new THREE.Group();
+          group.position.set(LANES[laneIdx], 1.2, zPos);
+
+          if (type === 'magnet') {
+            const ringGeo = new THREE.TorusGeometry(0.45, 0.15, 8, 16, Math.PI);
+            const redMat = new THREE.MeshBasicMaterial({ color: 0xef4444 });
+            const ring = new THREE.Mesh(ringGeo, redMat);
+            ring.rotation.z = Math.PI;
+            group.add(ring);
+
+            const tipGeo = new THREE.CylinderGeometry(0.16, 0.16, 0.25, 8);
+            const tipL = new THREE.Mesh(tipGeo, chromeMaterial);
+            tipL.position.set(-0.45, 0.1, 0);
+            group.add(tipL);
+            const tipR = tipL.clone();
+            tipR.position.x = 0.45;
+            group.add(tipR);
+
+          } else if (type === 'jetpack') {
+            const cGeo = new THREE.CylinderGeometry(0.18, 0.18, 0.8, 8);
+            const cMat = new THREE.MeshStandardMaterial({ color: 0x0284c7, metalness: 0.9 });
+            const r1 = new THREE.Mesh(cGeo, cMat);
+            r1.position.x = -0.25;
+            group.add(r1);
+            const r2 = r1.clone();
+            r2.position.x = 0.25;
+            group.add(r2);
+
+            const coneGeo = new THREE.ConeGeometry(0.2, 0.3, 8);
+            const coneMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+            const topL = new THREE.Mesh(coneGeo, coneMat);
+            topL.position.set(-0.25, 0.5, 0);
+            group.add(topL);
+            const topR = topL.clone();
+            topR.position.x = 0.25;
+            group.add(topR);
+
+          } else {
+            const boardGeo = new THREE.BoxGeometry(0.5, 0.1, 1.2);
+            const boardMat = new THREE.MeshStandardMaterial({
+              color: 0x10b981,
+              metalness: 0.6,
+              emissive: 0x059669,
+              emissiveIntensity: 0.6
+            });
+            const board = new THREE.Mesh(boardGeo, boardMat);
+            group.add(board);
+          }
+
+          this.group.add(group);
+          this.powerupItems.push({
+            type: type,
+            mesh: group,
+            baseY: 1.2,
+            collected: false
+          });
+        }
+
+        update(delta) {
+          this.coins.forEach(c => {
+            if (!c.collected) {
+              c.mesh.rotation.z += c.rotSpeed * delta;
+              c.mesh.position.y = c.baseY + Math.sin(Date.now() * 0.005) * 0.12;
+
+              if (powerups.magnet.active) {
+                const worldPos = new THREE.Vector3();
+                c.mesh.getWorldPosition(worldPos);
+                const pPos = player.group.position;
+                const dist = worldPos.distanceTo(pPos);
+                if (dist < 18.0) {
+                  const pullDir = new THREE.Vector3().subVectors(pPos, worldPos).normalize();
+                  c.mesh.position.x += pullDir.x * 28 * delta;
+                  c.mesh.position.y += pullDir.y * 28 * delta;
+                  c.mesh.position.z += pullDir.z * 28 * delta;
+                }
+              }
+            }
+          });
+
+          this.powerupItems.forEach(p => {
+            if (!p.collected) {
+              p.mesh.rotation.y += 2.5 * delta;
+              p.mesh.position.y = p.baseY + Math.sin(Date.now() * 0.006) * 0.15;
+            }
+          });
+
+          this.movingTrains.forEach(train => {
+            train.localZ += train.speed * delta;
+            train.mesh.position.z = train.localZ;
+          });
+        }
+      }
+
+      /* Track Manager */
+      class TrackManager {
+        constructor() {
+          this.chunks = [];
+          for (let i = 0; i < NUM_CHUNKS; i++) {
+            const chunk = new TrackChunk(i);
+            chunk.populate(0);
+            this.chunks.push(chunk);
+          }
+        }
+
+        reset() {
+          for (let i = 0; i < NUM_CHUNKS; i++) {
+            const chunk = this.chunks[i];
+            chunk.z = -i * CHUNK_LENGTH;
+            chunk.group.position.z = chunk.z;
+            chunk.populate(0);
+          }
+        }
+
+        update(delta, playerZ, difficultyRatio) {
+          this.chunks.forEach(chunk => {
+            chunk.update(delta);
+
+            if (chunk.z > playerZ + CHUNK_LENGTH) {
+              let minZ = 0;
+              this.chunks.forEach(c => {
+                if (c.z < minZ) minZ = c.z;
+              });
+
+              chunk.z = minZ - CHUNK_LENGTH;
+              chunk.group.position.z = chunk.z;
+              chunk.populate(difficultyRatio);
+            }
+          });
+        }
+      }
+
+      const trackManager = new TrackManager();
+
+      /* =========================================================================
+         COLLISION DETECTION
+         ========================================================================= */
+      function checkCollisions() {
+        if (currentState !== STATE.PLAYING) return;
+
+        const playerBox = player.box;
+        const playerPos = player.group.position;
+
+        trackManager.chunks.forEach(chunk => {
+          // 1. Obstacle collisions
+          chunk.obstacles.forEach(obs => {
+            const obsWorldZ = chunk.z + obs.localZ;
+            const obsX = LANES[obs.lane];
+
+            if (Math.abs(playerPos.z - obsWorldZ) < obs.halfDepth + 1.2 &&
+                Math.abs(playerPos.x - obsX) < obs.halfWidth + 0.6) {
+
+              obs.box.min.set(obsX - obs.halfWidth, obs.minY, obsWorldZ - obs.halfDepth);
+              obs.box.max.set(obsX + obs.halfWidth, obs.maxY, obsWorldZ + obs.halfDepth);
+
+              if (playerBox.intersectsBox(obs.box)) {
+                if (obs.type === 'train' || obs.type === 'moving_train') {
+                  if (playerPos.y >= obs.maxY - 0.3 && player.velocityY <= 0) {
+                    player.y = obs.maxY;
+                    player.velocityY = 0;
+                    player.isGrounded = true;
+                    player.isJumping = false;
+                    return;
+                  }
+                }
+
+                if (obs.type === 'hurdle' && playerPos.y > obs.maxY) {
+                  return;
+                }
+
+                if (obs.type === 'high_sign' && player.isSliding && (playerPos.y + 0.7) < obs.minY + 0.3) {
+                  return;
+                }
+
+                handleCrash();
+              }
+            }
+          });
+
+          // 2. Stardust Coin collections
+          chunk.coins.forEach(coin => {
+            if (!coin.collected) {
+              const coinWorldPos = new THREE.Vector3();
+              coin.mesh.getWorldPosition(coinWorldPos);
+
+              if (coinWorldPos.distanceTo(playerPos) < 1.4) {
+                coin.collected = true;
+                chunk.group.remove(coin.mesh);
+                coinsCount++;
+                score += 50 * multiplier;
+                sounds.playCoin();
+                particles.spawnSparks(coinWorldPos.x, coinWorldPos.y, coinWorldPos.z, 8, 0xfacc15);
+                updateHUD();
+              }
+            }
+          });
+
+          // 3. Power-up collections
+          chunk.powerupItems.forEach(p => {
+            if (!p.collected) {
+              const pWorldPos = new THREE.Vector3();
+              p.mesh.getWorldPosition(pWorldPos);
+
+              if (pWorldPos.distanceTo(playerPos) < 1.6) {
+                p.collected = true;
+                chunk.group.remove(p.mesh);
+                activatePowerup(p.type);
+                sounds.playPowerup();
+                particles.spawnSparks(pWorldPos.x, pWorldPos.y, pWorldPos.z, 14, 0x38bdf8);
+              }
+            }
+          });
+        });
+      }
+
+      function activatePowerup(type) {
+        if (type === 'magnet') {
+          powerups.magnet.active = true;
+          powerups.magnet.timer = powerups.magnet.maxDuration;
+          showNotification('🧲 GRAVITY MAGNET ACTIVE!');
+        } else if (type === 'jetpack') {
+          powerups.jetpack.active = true;
+          powerups.jetpack.timer = powerups.jetpack.maxDuration;
+          showNotification('🚀 WARP THRUSTER BLASTOFF!');
+          spawnSkyCoins();
+        } else if (type === 'hoverboard') {
+          powerups.hoverboard.active = true;
+          powerups.hoverboard.timer = powerups.hoverboard.maxDuration;
+          multiplier = 2;
+          showNotification('🛹 COSMIC SHIELD ACTIVE!');
+        }
+        updatePowerupHUD();
+      }
+
+      function spawnSkyCoins() {
+        trackManager.chunks.forEach(chunk => {
+          if (chunk.z < player.group.position.z - 20) {
+            for (let z = -5; z > -CHUNK_LENGTH; z -= 3) {
+              chunk.spawnSingleCoin(0, 8.5, z);
+            }
+          }
+        });
+      }
+
+      function updatePowerups(delta) {
+        if (powerups.magnet.active) {
+          powerups.magnet.timer -= delta;
+          if (powerups.magnet.timer <= 0) {
+            powerups.magnet.active = false;
+          }
+        }
+
+        if (powerups.jetpack.active) {
+          powerups.jetpack.timer -= delta;
+          particles.spawnJetpackFlames(player.currentX, player.y + 0.8, player.group.position.z);
+          if (powerups.jetpack.timer <= 0) {
+            powerups.jetpack.active = false;
+          }
+        }
+
+        if (powerups.hoverboard.active) {
+          powerups.hoverboard.timer -= delta;
+          if (powerups.hoverboard.timer <= 0) {
+            powerups.hoverboard.active = false;
+            multiplier = 1;
+          }
+        }
+
+        updatePowerupHUD();
+      }
+
+      function handleCrash() {
+        if (powerups.hoverboard.active) {
+          powerups.hoverboard.active = false;
+          multiplier = 1;
+          sounds.playShieldBreak();
+          particles.spawnSparks(player.currentX, player.y + 1, player.group.position.z, 20, 0x10b981);
+          showNotification('💥 SHIELD SAVED YOU!');
+          player.group.position.z -= 4.0;
+          return;
+        }
+
+        currentState = STATE.GAMEOVER;
+        sounds.playCrash();
+        particles.spawnSparks(player.currentX, player.y + 1, player.group.position.z, 30, 0xf43f5e);
+
+        player.rootNode.rotation.x = 1.4;
+        player.rootNode.rotation.z = 0.8;
+
+        let isNewHigh = false;
+        if (score > highScore) {
+          highScore = score;
+          localStorage.setItem('subway_high_score', highScore.toString());
+          isNewHigh = true;
+        }
+
+        totalCoins += coinsCount;
+        localStorage.setItem('subway_total_coins', totalCoins.toString());
+
+        setTimeout(() => {
+          document.getElementById('hud').style.display = 'none';
+          document.getElementById('mobile-controls').style.display = 'none';
+          document.getElementById('new-record-banner').style.display = isNewHigh ? 'block' : 'none';
+          document.getElementById('go-score').textContent = Math.floor(score);
+          document.getElementById('go-coins').textContent = coinsCount;
+          document.getElementById('go-high-score').textContent = highScore;
+          document.getElementById('go-distance').textContent = (distanceTraveled * 0.01).toFixed(1) + 'ly';
+          document.getElementById('gameover-screen').classList.add('active');
+        }, 650);
+      }
+
+      /* =========================================================================
+         CAMERA CONTROLLER & CELESTIAL ROTATION
+         ========================================================================= */
+      function updateCamera(delta) {
+        const playerPos = player.group.position;
+
+        let targetCamY = 5.2;
+        let targetCamZ = playerPos.z + 8.2;
+        let targetCamX = playerPos.x * 0.45;
+
+        if (powerups.jetpack.active) {
+          targetCamY = 12.0;
+          targetCamZ = playerPos.z + 10.0;
+        }
+
+        const lerpCam = 1.0 - Math.exp(-12 * delta);
+        camera.position.x += (targetCamX - camera.position.x) * lerpCam;
+        camera.position.y += (targetCamY - camera.position.y) * lerpCam;
+        camera.position.z += (targetCamZ - camera.position.z) * lerpCam;
+
+        const lookTarget = new THREE.Vector3(playerPos.x * 0.6, playerPos.y + 1.6, playerPos.z - 8.0);
+        camera.lookAt(lookTarget);
+
+        starKeyLight.position.set(playerPos.x + 30, playerPos.y + 50, playerPos.z + 20);
+        starKeyLight.target.position.set(playerPos.x, playerPos.y, playerPos.z - 10);
+        starKeyLight.target.updateMatrixWorld();
+
+        // Keep celestial bodies slowly rotating in background
+        if (ringedPlanetGroup) {
+          ringedPlanetGroup.rotation.y += 0.03 * delta;
+        }
+        celestialGroup.position.z = playerPos.z * 0.9; // Parallax
+      }
+
+      /* =========================================================================
+         UI & HUD UPDATES
+         ========================================================================= */
+      function updateHUD() {
+        document.getElementById('hud-score').textContent = Math.floor(score);
+        document.getElementById('hud-coins').textContent = coinsCount;
+        document.getElementById('hud-multiplier').textContent = multiplier + 'X';
+      }
+
+      function updatePowerupHUD() {
+        const magnetEl = document.getElementById('magnet-timer');
+        if (powerups.magnet.active) {
+          magnetEl.style.display = 'flex';
+          const pct = (powerups.magnet.timer / powerups.magnet.maxDuration) * 100;
+          document.getElementById('magnet-bar-fill').style.width = pct + '%';
+        } else {
+          magnetEl.style.display = 'none';
+        }
+
+        const jetpackEl = document.getElementById('jetpack-timer');
+        if (powerups.jetpack.active) {
+          jetpackEl.style.display = 'flex';
+          const pct = (powerups.jetpack.timer / powerups.jetpack.maxDuration) * 100;
+          document.getElementById('jetpack-bar-fill').style.width = pct + '%';
+        } else {
+          jetpackEl.style.display = 'none';
+        }
+
+        const hoverboardEl = document.getElementById('hoverboard-timer');
+        if (powerups.hoverboard.active) {
+          hoverboardEl.style.display = 'flex';
+          const pct = (powerups.hoverboard.timer / powerups.hoverboard.maxDuration) * 100;
+          document.getElementById('hoverboard-bar-fill').style.width = pct + '%';
+        } else {
+          hoverboardEl.style.display = 'none';
+        }
+      }
+
+      function showNotification(text) {
+        const area = document.getElementById('notification-area');
+        const notif = document.createElement('div');
+        notif.className = 'float-text';
+        notif.textContent = text;
+        area.appendChild(notif);
+        setTimeout(() => {
+          if (notif.parentNode) notif.parentNode.removeChild(notif);
+        }, 1200);
+      }
+
+      /* =========================================================================
+         GAME CONTROLS (START, RESTART, PAUSE)
+         ========================================================================= */
+      function startGame() {
+        sounds.init();
+        sounds.playTone(660, 'sine', 0.12, 0.25);
+
+        score = 0;
+        coinsCount = 0;
+        distanceTraveled = 0;
+        currentSpeed = BASE_SPEED;
+        multiplier = 1;
+
+        powerups.magnet.active = false;
+        powerups.jetpack.active = false;
+        powerups.hoverboard.active = false;
+
+        player.reset();
+        trackManager.reset();
+        particles.clear();
+
+        document.getElementById('start-screen').classList.remove('active');
+        document.getElementById('gameover-screen').classList.remove('active');
+        document.getElementById('pause-screen').classList.remove('active');
+
+        document.getElementById('hud').style.display = 'flex';
+        document.getElementById('mobile-controls').style.display = 'flex';
+
+        updateHUD();
+        currentState = STATE.PLAYING;
+      }
+
+      function pauseGame() {
+        if (currentState === STATE.PLAYING) {
+          currentState = STATE.PAUSED;
+          document.getElementById('pause-screen').classList.add('active');
+        }
+      }
+
+      function resumeGame() {
+        if (currentState === STATE.PAUSED) {
+          currentState = STATE.PLAYING;
+          document.getElementById('pause-screen').classList.remove('active');
+        }
+      }
+
+      function quitToMenu() {
+        currentState = STATE.MENU;
+        document.getElementById('pause-screen').classList.remove('active');
+        document.getElementById('gameover-screen').classList.remove('active');
+        document.getElementById('hud').style.display = 'none';
+        document.getElementById('mobile-controls').style.display = 'none';
+        document.getElementById('start-high-score').textContent = highScore;
+        document.getElementById('start-total-coins').textContent = totalCoins;
+        document.getElementById('start-screen').classList.add('active');
+        player.reset();
+      }
+
+      document.getElementById('start-high-score').textContent = highScore;
+      document.getElementById('start-total-coins').textContent = totalCoins;
+
+      /* =========================================================================
+         INPUT SYSTEM (Keyboard, Mobile Swipes, Touch Buttons)
+         ========================================================================= */
+      window.addEventListener('keydown', (e) => {
+        if (currentState === STATE.PLAYING) {
+          switch (e.code) {
+            case 'ArrowLeft':
+            case 'KeyA':
+              e.preventDefault();
+              player.switchLane(-1);
+              break;
+            case 'ArrowRight':
+            case 'KeyD':
+              e.preventDefault();
+              player.switchLane(1);
+              break;
+            case 'ArrowUp':
+            case 'KeyW':
+            case 'Space':
+              e.preventDefault();
+              player.jump();
+              break;
+            case 'ArrowDown':
+            case 'KeyS':
+              e.preventDefault();
+              player.slide();
+              break;
+            case 'Escape':
+              e.preventDefault();
+              pauseGame();
+              break;
+          }
+        } else if (currentState === STATE.MENU || currentState === STATE.GAMEOVER) {
+          if (e.code === 'Space' || e.code === 'Enter') {
+            e.preventDefault();
+            startGame();
+          }
+        }
+      });
+
+      // Mobile Swipe Gestures
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let touchStartTime = 0;
+
+      window.addEventListener('touchstart', (e) => {
+        if (e.touches.length > 0) {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          touchStartTime = Date.now();
+        }
+      }, { passive: true });
+
+      window.addEventListener('touchend', (e) => {
+        if (currentState !== STATE.PLAYING) return;
+        if (e.changedTouches.length === 0) return;
+
+        const touchEndX = e.changedTouches[0].clientX;
+        const touchEndY = e.changedTouches[0].clientY;
+        const deltaX = touchEndX - touchStartX;
+        const deltaY = touchEndY - touchStartY;
+
+        const minSwipeDist = 28;
+
+        if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > minSwipeDist) {
+          if (deltaX < 0) {
+            player.switchLane(-1);
+          } else {
+            player.switchLane(1);
+          }
+        } else if (Math.abs(deltaY) > minSwipeDist) {
+          if (deltaY < 0) {
+            player.jump();
+          } else {
+            player.slide();
+          }
+        }
+      }, { passive: true });
+
+      // On-Screen Touch Buttons
+      document.getElementById('touch-left').addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        player.switchLane(-1);
+      });
+      document.getElementById('touch-right').addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        player.switchLane(1);
+      });
+      document.getElementById('touch-jump').addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        player.jump();
+      });
+      document.getElementById('touch-slide').addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        player.slide();
+      });
+
+      // UI Buttons
+      document.getElementById('btn-play').addEventListener('click', startGame);
+      document.getElementById('btn-restart').addEventListener('click', startGame);
+      document.getElementById('btn-pause').addEventListener('click', pauseGame);
+      document.getElementById('btn-resume').addEventListener('click', resumeGame);
+      document.getElementById('btn-quit').addEventListener('click', quitToMenu);
+      document.getElementById('btn-sound').addEventListener('click', () => sounds.toggleMute());
+
+      // Resize
+      window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      /* =========================================================================
+         MAIN GAME TICK & RENDER LOOP
+         ========================================================================= */
+      const clock = new THREE.Clock();
+
+      function gameLoop() {
+        requestAnimationFrame(gameLoop);
+
+        const delta = Math.min(clock.getDelta(), 0.1);
+
+        if (currentState === STATE.PLAYING) {
+          if (currentSpeed < MAX_SPEED) {
+            currentSpeed += SPEED_ACCEL * delta;
+          }
+
+          const moveDist = currentSpeed * delta;
+          player.group.position.z -= moveDist;
+          distanceTraveled += moveDist;
+
+          score += (currentSpeed * 0.5 * multiplier) * delta;
+          updateHUD();
+
+          const difficultyRatio = Math.min(1.0, distanceTraveled / 1200);
+
+          player.update(delta);
+          trackManager.update(delta, player.group.position.z, difficultyRatio);
+          updatePowerups(delta);
+          particles.update(delta);
+          checkCollisions();
+
+        } else if (currentState === STATE.MENU) {
+          player.rootNode.rotation.y = Math.sin(Date.now() * 0.002) * 0.25;
+          player.rootNode.position.y = Math.sin(Date.now() * 0.004) * 0.08;
+        }
+
+        updateCamera(delta);
+        renderer.render(scene, camera);
+      }
+
+      gameLoop();
+    </script>
+  </body>
+</html>
